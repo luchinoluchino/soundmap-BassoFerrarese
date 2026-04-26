@@ -1,335 +1,170 @@
 <!DOCTYPE html>
-
 <html>
-
 <head>
-
-<title>Mappa Sonora - Delta del Po</title>
-
-<meta charset="utf-8" />
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-<style>
-
-
-
-.leaflet-tile-container {
-
-filter: sepia(0.5) contrast(1) brightness(1.2);
-
-}
-
-body { margin: 0; padding: 0; }
-
-#map { height: 100vh; width: 100%; background: #e0e0e0; }
-
-/* CURSORE PALLINO BORDEAUX */
-
-.custom-marker {
-
-background: #800020;
-
-border: 1.5px solid white;
-
-border-radius: 50%;
-
-transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-
-}
-
-
-
-/* Effetto quando l'audio è attivo */
-
-.marker-active {
-
-transform: scale(2);
-
-box-shadow: 0 0 15px rgba(128, 0, 32, 0.6);
-
-background: #a00028;
-
-}
-
-
-
-/* VIGNETTA TRASPARENTE */
-
-.leaflet-popup-content-wrapper {
-
-background: transparent !important;
-
-box-shadow: none !important;
-
-padding: 0;
-
-}
-
-.leaflet-popup-tip-container { display: none; }
-
-
-
-.custom-audio-row {
-
-display: flex;
-
-flex-direction: column;
-
-align-items: center;
-
-pointer-events: none;
-
-user-select: none;
-
-}
-
-
-
-.popup-title {
-
-font-size: 11px;
-
-font-weight: bold;
-
-text-transform: uppercase;
-
-color: #800020;
-
-letter-spacing: 1px;
-
-text-shadow: 1px 1px 3px rgba(255,255,255,0.9);
-
-}
-
-
-
-.time-display {
-
-font-family: monospace;
-
-font-size: 9px;
-
-color: #444;
-
-text-shadow: 1px 1px 2px rgba(255,255,255,0.9);
-
-}
-
-.leaflet-popup-content { margin: 0 !important; }
-
-.leaflet-popup-close-button { display: none !important; }
-
-audio { display: none; }
-
-</style>
-
+    <title>Mappa Sonora - Delta del Po</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; background: #1a1a1a; }
+        #map { height: 100vh; width: 100%; background: #1a1a1a; }
+
+        /* CURSORE PALLINO BIANCO */
+        .custom-marker {
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.5);
+            border-radius: 50%;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        /* Effetto quando l'audio è attivo: si espande e pulsa */
+        .marker-active {
+            transform: scale(2.5);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            background: #ffffff;
+        }
+
+        /* VIGNETTA TRASPARENTE */
+        .leaflet-popup-content-wrapper {
+            background: transparent !important;
+            box-shadow: none !important;
+            padding: 0;
+        }
+        .leaflet-popup-tip-container { display: none; }
+
+        .custom-audio-row {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* SCRITTA BIANCA */
+        .popup-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #ffffff; /* Testo bianco */
+            letter-spacing: 1.5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8); /* Ombra per leggibilità */
+            margin-bottom: 4px;
+        }
+
+        .time-display {
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .leaflet-popup-content { margin: 0 !important; }
+        .leaflet-popup-close-button { display: none !important; }
+        audio { display: none; }
+    </style>
 </head>
-
 <body>
-
-
 
 <div id="map"></div>
 
-
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-
-
 <script>
-
-var map = L.map('map').setView([44.75, 12.15], 10);
-
-
-
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-
-attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-
-subdomains: 'abcd',
-
-maxZoom: 20
-
-}).addTo(map);
-
-
-
-var imageBounds = [[44.565115, 11.114875], [45.074726, 12.334512]];
-
-L.imageOverlay('mappa_storica.png', imageBounds, { opacity: 0.0}).addTo(map);
-
-
-
-var bordeauxIcon = L.divIcon({ className: 'custom-marker', iconSize: [12, 12], iconAnchor: [6, 6] });
-
-
-
-function formatTime(seconds) {
-
-if (isNaN(seconds)) return "0:00";
-
-var min = Math.floor(seconds / 60);
-
-var sec = Math.floor(seconds % 60);
-
-return min + ":" + (sec < 10 ? "0" : "") + sec;
-
-}
-
-
-
-function addAudioPoint(lat, lng, titolo, fileAudio) {
-
-var marker = L.marker([lat, lng], {icon: bordeauxIcon}).addTo(map);
-
-var audioId = "audio-" + Math.floor(Math.random() * 10000);
-
-var audio = document.createElement('audio');
-
-audio.id = audioId;
-
-audio.src = fileAudio;
-
-document.body.appendChild(audio);
-
-
-
-var content = `
-
-<div class="custom-audio-row">
-
-<span class="popup-title">${titolo}</span>
-
-<span id="time-${audioId}" class="time-display">0:00 / 0:00</span>
-
-</div>
-
-`;
-
-marker.bindPopup(content, { offset: [0, -15], closeOnClick: false });
-
-
-
-// LOGICA CLICK TOGGLE (Play/Pause)
-
-marker.on('click', function() {
-
-if (!audio.paused) {
-
-// Se sta già suonando, mettiamo in pausa
-
-audio.pause();
-
-marker._icon.classList.remove('marker-active');
-
-marker.closePopup();
-
-} else {
-
-// Se è fermo, fermiamo prima tutti gli altri
-
-document.querySelectorAll('audio').forEach(function(a) {
-
-a.pause();
-
-a.currentTime = 0;
-
-});
-
-document.querySelectorAll('.custom-marker').forEach(m => m.classList.remove('marker-active'));
-
-
-
-// Poi facciamo partire questo
-
-audio.play();
-
-marker._icon.classList.add('marker-active');
-
-marker.openPopup();
-
-}
-
-});
-
-
-
-audio.ontimeupdate = function() {
-
-var display = document.getElementById('time-' + audioId);
-
-if (display) {
-
-display.innerHTML = formatTime(audio.currentTime) + " / " + formatTime(audio.duration);
-
-}
-
-};
-
-
-
-// Quando l'audio finisce naturalmente, resettiamo il marker
-
-audio.onended = function() {
-
-marker._icon.classList.remove('marker-active');
-
-marker.closePopup();
-
-};
-
-}
-
-
-
-// Click sulla mappa (vuoto): ferma tutto
-
-map.on('click', function() {
-
-document.querySelectorAll('audio').forEach(function(a) {
-
-a.pause();
-
-a.currentTime = 0;
-
-});
-
-document.querySelectorAll('.custom-marker').forEach(m => m.classList.remove('marker-active'));
-
-map.closePopup();
-
-});
-
-
-
-// Punti Audio
-
-addAudioPoint(44.730925, 12.241766, "Bamboo a Lido Nazioni", "Nazioni_bamboo_02.mp3");
-
-addAudioPoint(44.896928, 11.646987, "Argine di Francolino", "Francolino_04.mp3");
-
-addAudioPoint(44.983694, 11.974799, "Argine di Berra", "Berra_03.mp3");
-
-addAudioPoint(44.971778, 12.053048, "Argine di Serravalle", "Serravalle_01.mp3");
-
-addAudioPoint(44.846807, 11.942832, "Canale di Gherardi", "Gherardi_03.mp3");
-
-addAudioPoint(44.804372, 12.266573, "Sotto un ponte a Volano", "Volano_01.mp3");
-
-addAudioPoint(44.938149, 12.519243, "Spiaggia di Pila", "SpiaggiaDiPila_mare_24bit48.mp3");
-
-addAudioPoint(44.863988, 12.259193, "Boscone della Mesola", "BosconedellaMesola_Cicale+Mosche_24bit48.mp3");
-
-
-
-map.fitBounds(imageBounds);
+    // Inizializzazione mappa
+    var map = L.map('map', {
+        zoomControl: false // Spesso nelle installazioni è meglio toglierlo per pulizia
+    }).setView([44.75, 12.15], 10);
+
+    // NUOVO STILE MAPPA: CartoDB Voyager Dark 
+    // Rispetto al "Dark Matter", questo ha strade e confini leggermente più definiti
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 20
+    }).addTo(map);
+
+    // ICONA BIANCA
+    var whiteIcon = L.divIcon({ 
+        className: 'custom-marker', 
+        iconSize: [10, 10], 
+        iconAnchor: [5, 5] 
+    });
+
+    function formatTime(seconds) {
+        if (isNaN(seconds)) return "0:00";
+        var min = Math.floor(seconds / 60);
+        var sec = Math.floor(seconds % 60);
+        return min + ":" + (sec < 10 ? "0" : "") + sec;
+    }
+
+    function addAudioPoint(lat, lng, titolo, fileAudio) {
+        var marker = L.marker([lat, lng], {icon: whiteIcon}).addTo(map);
+        var audioId = "audio-" + Math.floor(Math.random() * 10000);
+        var audio = document.createElement('audio');
+        audio.id = audioId;
+        audio.src = fileAudio;
+        document.body.appendChild(audio);
+
+        var content = `
+            <div class="custom-audio-row">
+                <span class="popup-title">${titolo}</span>
+                <span id="time-${audioId}" class="time-display">0:00 / 0:00</span>
+            </div>
+        `;
+        marker.bindPopup(content, { offset: [0, -15], closeOnClick: false });
+
+        marker.on('click', function() {
+            if (!audio.paused) {
+                audio.pause();
+                marker._icon.classList.remove('marker-active');
+                marker.closePopup();
+            } else {
+                document.querySelectorAll('audio').forEach(function(a) {
+                    a.pause();
+                    a.currentTime = 0;
+                });
+                document.querySelectorAll('.custom-marker').forEach(m => m.classList.remove('marker-active'));
+
+                audio.play();
+                marker._icon.classList.add('marker-active');
+                marker.openPopup();
+            }
+        });
+
+        audio.ontimeupdate = function() {
+            var display = document.getElementById('time-' + audioId);
+            if (display) {
+                display.innerHTML = formatTime(audio.currentTime) + " / " + formatTime(audio.duration);
+            }
+        };
+
+        audio.onended = function() {
+            marker._icon.classList.remove('marker-active');
+            marker.closePopup();
+        };
+    }
+
+    // Punti Audio
+    addAudioPoint(44.730925, 12.241766, "Bamboo a Lido Nazioni", "Nazioni_bamboo_02.mp3");
+    addAudioPoint(44.896928, 11.646987, "Argine di Francolino", "Francolino_04.mp3");
+    addAudioPoint(44.983694, 11.974799, "Argine di Berra", "Berra_03.mp3");
+    addAudioPoint(44.971778, 12.053048, "Argine di Serravalle", "Serravalle_01.mp3");
+    addAudioPoint(44.846807, 11.942832, "Canale di Gherardi", "Gherardi_03.mp3");
+    addAudioPoint(44.804372, 12.266573, "Sotto un ponte a Volano", "Volano_01.mp3");
+    addAudioPoint(44.938149, 12.519243, "Spiaggia di Pila", "SpiaggiaDiPila_mare_24bit48.mp3");
+    addAudioPoint(44.863988, 12.259193, "Boscone della Mesola", "BosconedellaMesola_Cicale+Mosche_24bit48.mp3");
+
+    // Click sulla mappa per fermare tutto
+    map.on('click', function() {
+        document.querySelectorAll('audio').forEach(function(a) {
+            a.pause();
+            a.currentTime = 0;
+        });
+        document.querySelectorAll('.custom-marker').forEach(m => m.classList.remove('marker-active'));
+        map.closePopup();
+    });
 
 </script>
-
 </body>
-
 </html>
