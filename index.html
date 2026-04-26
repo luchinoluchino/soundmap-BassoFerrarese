@@ -74,14 +74,14 @@
     // Inizializzazione mappa
     var map = L.map('map', {
         zoomControl: false // Spesso nelle installazioni è meglio toglierlo per pulizia
-    }).setView([44.807818, 12.045471], 10.51);
+    }).setView([44.807818, 12.045471], 10.50);
 
     // NUOVO STILE MAPPA: CartoDB Voyager Dark 
     // Rispetto al "Dark Matter", questo ha strade e confini leggermente più definiti
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; CARTO',
         subdomains: 'abcd',
-        maxZoom: 10.5
+        maxZoom: 10.51
     }).addTo(map);
 
     // ICONA BIANCA
