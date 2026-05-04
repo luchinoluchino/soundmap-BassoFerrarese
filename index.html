@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        /* RESET E IMPOSTAZIONI MINIMALI */
         body {
             margin: 0;
             padding: 0;
@@ -18,20 +17,17 @@
             background: #0f0f0f;
         }
 
-        /* STILE MAPPA: NASCONDO ELEMENTI SUPERFLUI - SENZA Z-INDEX PROBLEMI */
         .leaflet-control-attribution {
             font-size: 8px;
             background: rgba(0,0,0,0.5);
             color: #ccc;
             padding: 2px 5px;
             border-radius: 4px;
-            pointer-events: auto; /* Assicura che l'attribuzione sia cliccabile ma non blocchi i marker */
         }
         .leaflet-control-attribution a {
             color: #ddd;
         }
         
-        /* Zoom control minimal senza effetti che creano problemi di z-index */
         .leaflet-control-zoom {
             border: none !important;
             background: rgba(0,0,0,0.6) !important;
@@ -44,27 +40,28 @@
             border-bottom: 1px solid #333 !important;
         }
 
-        /* MARKER MINIMAL: CERCHIO VUOTO (COME UN ANELLO) - ORA SICURO E CLICCABILE */
+        /* MARKER: ORA NERO (VISIBILE SULLA MAPPA CHIARA) */
         .custom-marker {
             background: transparent !important;
             width: 12px !important;
             height: 12px !important;
-            border: 1.5px solid rgba(255,255,255,0.9);
+            border: 2px solid #1a1a1a;  /* Nero/grigio scuro */
             border-radius: 50%;
             transition: all 0.2s ease-out;
-            box-shadow: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
             cursor: pointer;
-            z-index: 1000; /* Forziamo sopra la mappa */
-            pointer-events: auto; /* Assicura che riceva il click */
+            z-index: 1000;
+            pointer-events: auto;
         }
-        /* Quando attivo: si riempie e diventa bianco */
+        
+        /* Quando attivo: diventa bianco con alone nero */
         .marker-active {
-            background: rgba(255,255,255,1) !important;
-            border-color: rgba(255,255,255,1);
-            transform: scale(1.2);
+            background: white !important;
+            border-color: #1a1a1a !important;
+            transform: scale(1.3);
+            box-shadow: 0 0 8px rgba(0,0,0,0.3);
         }
 
-        /* POPUP TOTALMENTE TRASPARENTE E MINIMO */
         .leaflet-popup {
             border: none !important;
             background: transparent !important;
@@ -87,31 +84,31 @@
             font-size: 11px;
             letter-spacing: 1.2px;
             text-transform: uppercase;
-            color: white;
+            color: #1a1a1a;  /* Testo scuro per contrastare lo sfondo chiaro del popup */
             background: transparent;
             text-align: center;
             white-space: nowrap;
             padding: 2px 0 0 0;
         }
-        /* Rimuovo il pulsante di chiusura */
         .leaflet-popup-close-button {
             display: none !important;
         }
 
-        /* STILE PER I TESTI DENTRO IL POPUP */
+        /* STILE PER I TESTI DENTRO IL POPUP - ora scuro su fondo semitrasparente chiaro */
         .popup-title {
             font-size: 11px;
-            font-weight: 400;
-            background: rgba(0,0,0,0.55);
-            padding: 2px 6px;
-            border-radius: 14px;
+            font-weight: 500;
+            background: rgba(255,255,255,0.85);
+            padding: 3px 8px;
+            border-radius: 16px;
             letter-spacing: 1px;
-            color: #f0f0f0;
+            color: #1a1a1a;
             display: inline-block;
             backdrop-filter: blur(2px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         .time-display {
-            display: none; /* Nascondo il timer per massima pulizia */
+            display: none;
         }
 
         audio {
@@ -125,14 +122,13 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-    // IMPOSTAZIONI MAPPA: look desaturato e molto "cartografico pulito"
     var map = L.map('map', {
         zoomControl: true,
         fadeAnimation: true,
         attributionControl: true
     }).setView([44.807818, 12.045471], 10.5);
 
-    // Layer toni neutri/grigi: CartoDB Positron (solo labels)
+    // Mappa chiara (Positron)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CARTO',
         subdomains: 'abcd',
@@ -140,14 +136,13 @@
         minZoom: 8
     }).addTo(map);
 
-    // ICONA MINIMAL (cerchio vuoto)
+    // Icona con bordo nero
     var minimalIcon = L.divIcon({ 
         className: 'custom-marker', 
         iconSize: [12, 12], 
         iconAnchor: [6, 6]
     });
 
-    // Aggiunta punti audio
     function addAudioPoint(lat, lng, titolo, fileAudio) {
         var marker = L.marker([lat, lng], { icon: minimalIcon }).addTo(map);
         var audioId = "audio-" + Math.floor(Math.random() * 10000);
@@ -170,7 +165,6 @@
                 marker._icon.classList.remove('marker-active');
                 marker.closePopup();
             } else {
-                // Ferma tutti gli altri audio
                 document.querySelectorAll('audio').forEach(function(a) {
                     if (a !== audio) {
                         a.pause();
@@ -195,12 +189,11 @@
         
         audio.onerror = function() {
             console.warn(`⚠️ Audio non trovato: ${fileAudio}`);
-            // Rende il marker meno evidente se l'audio manca (opzionale)
-            marker._icon.style.opacity = '0.4';
+            if (marker._icon) marker._icon.style.opacity = '0.4';
         };
     }
 
-    // ------------------------ TUTTI I TUOI PUNTI AUDIO ------------------------
+    // Punti audio
     addAudioPoint(44.730925, 12.241766, "Bamboo a Lido Nazioni", "Nazioni_bamboo_02.mp3");
     addAudioPoint(44.896928, 11.646987, "Argine di Francolino", "Francolino_04.mp3");
     addAudioPoint(44.983694, 11.974799, "Argine di Berra", "Berra_03.mp3");
@@ -220,7 +213,7 @@
     addAudioPoint(44.903070, 12.262778, "Oasi di Torre Abate a Mesola", "Mesola(Oasi)_002.mp3");
     addAudioPoint(44.822732, 12.039893, "Sostegno e Torre di Tieni", " Montaggio_Tieni.mp3");
 
-    // CLICK SULLA MAPPA PER FERMARE TUTTO
+    // Click sulla mappa ferma tutto
     map.on('click', function() {
         document.querySelectorAll('audio').forEach(function(a) {
             a.pause();
