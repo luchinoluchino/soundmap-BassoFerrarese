@@ -18,48 +18,50 @@
             background: #0f0f0f;
         }
 
-        /* STILE MAPPA: NASCONDO ELEMENTI SUPERFLUI */
+        /* STILE MAPPA: NASCONDO ELEMENTI SUPERFLUI - SENZA Z-INDEX PROBLEMI */
         .leaflet-control-attribution {
             font-size: 8px;
-            background: rgba(0,0,0,0.4);
-            color: #555;
-            backdrop-filter: blur(4px);
+            background: rgba(0,0,0,0.5);
+            color: #ccc;
             padding: 2px 5px;
+            border-radius: 4px;
+            pointer-events: auto; /* Assicura che l'attribuzione sia cliccabile ma non blocchi i marker */
         }
         .leaflet-control-attribution a {
-            color: #777;
+            color: #ddd;
         }
-        /* Disabilito zoom control se non serve, lo lascio opzionale ma lo stilo minimale */
+        
+        /* Zoom control minimal senza effetti che creano problemi di z-index */
         .leaflet-control-zoom {
             border: none !important;
-            background: rgba(20,20,20,0.6) !important;
-            backdrop-filter: blur(8px);
-            border-radius: 0 !important;
+            background: rgba(0,0,0,0.6) !important;
+            border-radius: 4px !important;
         }
         .leaflet-control-zoom a {
             background: transparent !important;
-            color: #ddd !important;
+            color: white !important;
             border: none !important;
             border-bottom: 1px solid #333 !important;
         }
 
-        /* MARKER MINIMAL: CERCHIO VUOTO (COME UN ANELLO) */
+        /* MARKER MINIMAL: CERCHIO VUOTO (COME UN ANELLO) - ORA SICURO E CLICCABILE */
         .custom-marker {
-            background: transparent;
+            background: transparent !important;
             width: 12px !important;
             height: 12px !important;
-            border: 1.5px solid rgba(255,255,255,0.85);
+            border: 1.5px solid rgba(255,255,255,0.9);
             border-radius: 50%;
-            transition: all 0.25s ease-out;
+            transition: all 0.2s ease-out;
             box-shadow: none;
             cursor: pointer;
+            z-index: 1000; /* Forziamo sopra la mappa */
+            pointer-events: auto; /* Assicura che riceva il click */
         }
         /* Quando attivo: si riempie e diventa bianco */
         .marker-active {
-            background: rgba(255,255,255,1);
+            background: rgba(255,255,255,1) !important;
             border-color: rgba(255,255,255,1);
             transform: scale(1.2);
-            box-shadow: 0 0 6px rgba(255,255,255,0.5);
         }
 
         /* POPUP TOTALMENTE TRASPARENTE E MINIMO */
@@ -100,16 +102,16 @@
         .popup-title {
             font-size: 11px;
             font-weight: 400;
-            background: rgba(0,0,0,0.45);
-            backdrop-filter: blur(3px);
+            background: rgba(0,0,0,0.55);
             padding: 2px 6px;
             border-radius: 14px;
             letter-spacing: 1px;
             color: #f0f0f0;
             display: inline-block;
+            backdrop-filter: blur(2px);
         }
         .time-display {
-            display: none; /* Nascondo il timer per massima pulizia, come nel sito di riferimento */
+            display: none; /* Nascondo il timer per massima pulizia */
         }
 
         audio {
@@ -125,13 +127,12 @@
 <script>
     // IMPOSTAZIONI MAPPA: look desaturato e molto "cartografico pulito"
     var map = L.map('map', {
-        zoomControl: true,   // Lo teniamo ma stilizzato
+        zoomControl: true,
         fadeAnimation: true,
         attributionControl: true
     }).setView([44.807818, 12.045471], 10.5);
 
-    // Layer toni neutri/grigi: CartoDB Voyager (solo etichette e strade) ma con effetto pulito
-    // Per un'estetica Phantom Islands, uso un basemap molto anonimo e leggero: CartoDB Positron (solo labels)
+    // Layer toni neutri/grigi: CartoDB Positron (solo labels)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CARTO',
         subdomains: 'abcd',
@@ -143,44 +144,33 @@
     var minimalIcon = L.divIcon({ 
         className: 'custom-marker', 
         iconSize: [12, 12], 
-        iconAnchor: [6, 6]   // centro preciso
+        iconAnchor: [6, 6]
     });
 
-    // Funzione formatTime (non utilizzata nell'UI ma mantenuta per eventuali debug)
-    function formatTime(seconds) {
-        if (isNaN(seconds)) return "0:00";
-        var min = Math.floor(seconds / 60);
-        var sec = Math.floor(seconds % 60);
-        return min + ":" + (sec < 10 ? "0" : "") + sec;
-    }
-
-    // Aggiunta punti audio con stile super essenziale
+    // Aggiunta punti audio
     function addAudioPoint(lat, lng, titolo, fileAudio) {
         var marker = L.marker([lat, lng], { icon: minimalIcon }).addTo(map);
         var audioId = "audio-" + Math.floor(Math.random() * 10000);
         var audio = new Audio(fileAudio);
         audio.id = audioId;
-        // Non appendiamo al body? Meglio sì per assicurarci che funzioni
         document.body.appendChild(audio);
 
-        // Contenuto popup: solo titolo minimale (nessun timer visibile)
         var content = `<div class="popup-title">${titolo}</div>`;
         marker.bindPopup(content, { 
-            offset: [0, -10],   // Posizionato poco sopra il marker
+            offset: [0, -10],
             closeOnClick: false,
             autoPan: false
         });
 
-        // Gestione click: play/pause con stile minimal
         marker.on('click', function(e) {
-            L.DomEvent.stopPropagation(e); // Evita di propagare al click sulla mappa subito
-
+            L.DomEvent.stopPropagation(e);
+            
             if (!audio.paused) {
                 audio.pause();
                 marker._icon.classList.remove('marker-active');
                 marker.closePopup();
             } else {
-                // Ferma tutti gli altri audio e rimuovi stati attivi
+                // Ferma tutti gli altri audio
                 document.querySelectorAll('audio').forEach(function(a) {
                     if (a !== audio) {
                         a.pause();
@@ -196,19 +186,21 @@
             }
         });
 
-        // Al termine della riproduzione, chiudi popup e rimuovi stato attivo
         audio.onended = function() {
-            marker._icon.classList.remove('marker-active');
+            if (marker._icon) {
+                marker._icon.classList.remove('marker-active');
+            }
             marker.closePopup();
         };
         
-        // Opzionale: se l'audio ha errori (file non trovato) evitiamo errori in console
         audio.onerror = function() {
-            console.warn(`Audio non trovato: ${fileAudio}`);
+            console.warn(`⚠️ Audio non trovato: ${fileAudio}`);
+            // Rende il marker meno evidente se l'audio manca (opzionale)
+            marker._icon.style.opacity = '0.4';
         };
     }
 
-    // ------------------------ LISTA DEI TUOI PUNTI (identica, con titoli brevi e chiari) ------------------------
+    // ------------------------ TUTTI I TUOI PUNTI AUDIO ------------------------
     addAudioPoint(44.730925, 12.241766, "Bamboo a Lido Nazioni", "Nazioni_bamboo_02.mp3");
     addAudioPoint(44.896928, 11.646987, "Argine di Francolino", "Francolino_04.mp3");
     addAudioPoint(44.983694, 11.974799, "Argine di Berra", "Berra_03.mp3");
@@ -228,7 +220,7 @@
     addAudioPoint(44.903070, 12.262778, "Oasi di Torre Abate a Mesola", "Mesola(Oasi)_002.mp3");
     addAudioPoint(44.822732, 12.039893, "Sostegno e Torre di Tieni", " Montaggio_Tieni.mp3");
 
-    // CLICK SULLA MAPPA PER FERMARE TUTTO (come nello stile Phantom Islands: silenzio se clicchi fuori)
+    // CLICK SULLA MAPPA PER FERMARE TUTTO
     map.on('click', function() {
         document.querySelectorAll('audio').forEach(function(a) {
             a.pause();
@@ -236,11 +228,6 @@
         });
         document.querySelectorAll('.custom-marker').forEach(m => m.classList.remove('marker-active'));
         map.closePopup();
-    });
-
-    // Piccolo accorgimento: evita che il click sul popup chiuda tutto (utile)
-    map.on('popupopen', function() {
-        // non facciamo nulla, solo garantiamo che il popup sia stabile
     });
 </script>
 
